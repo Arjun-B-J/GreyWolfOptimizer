@@ -6,22 +6,15 @@ import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 
+tf.random.set_seed(42) #random seed
+
 class ANN:
+    
     def __init__(self,selected_features_index,data):
         self.selected_features_index = selected_features_index
         self.data = data
-
-    def mape_calc(actual, pred): 
-        actual, pred = np.array(actual), np.array(pred)
-        return np.mean(np.abs((actual - pred) / actual)) * 100
-
-    def smape(a, f):
-        return 1/len(a) * np.sum(2 * np.abs(f-a) / (np.abs(a) + np.abs(f))*100)
-
-    def test_model():
-        selected_features_index = self.selected_features_index
-        data = self.data
-
+    
+    def data_preprocessing(self,data,selected_features_index):
         X = data.drop("target", axis = 1)
         y = data["target"]
 
@@ -40,12 +33,24 @@ class ANN:
         scaler = StandardScaler()
         scaler.fit(X)
         X_scaled = scaler.transform(X) 
+        X_train, X_rem, y_train, y_rem = train_test_split(X_scaled,y, test_size=0.3, random_state=42)
+        X_valid, X_test, y_valid, y_test = train_test_split(X_rem,y_rem, test_size=0.5, random_state=42)
+        
+        #saving for later use
+        self.X_train = X_train
+        self.y_train = y_train
+        self.X_test = X_rem
+        self.y_test = y_rem
 
-        X_train, X_test, y_train, y_test = train_test_split(X_scaled,y, test_size=0.3, random_state=42)
+    def mape_calc(actual, pred): 
+        actual, pred = np.array(actual), np.array(pred)
+        return np.mean(np.abs((actual - pred) / actual)) * 100
 
-        tf.random.set_seed(42)
+    def smape(a, f):
+        return 1/len(a) * np.sum(2 * np.abs(f-a) / (np.abs(a) + np.abs(f))*100)
 
-        model = tf.keras.Sequential([
+    def build_model():
+        self.model = tf.keras.Sequential([
                                     tf.keras.layers.Dense(100,activation='relu'),
                                     tf.keras.layers.Dense(100,activation='relu'),
                                     tf.keras.layers.Dense(100,activation='relu'),
@@ -54,16 +59,25 @@ class ANN:
 
         ])
 
-        model.compile(loss=tf.keras.losses.mape,
+        self.model.compile(loss=tf.keras.losses.mape,
                         optimizer=tf.keras.optimizers.Adam(learning_rate=0.01),
                         metrics=['mape'])
+    
+    def train():
+        self.data_preprocessing()
+        self.build_model()
+        self.history = self.model.fit(self.X_train,self.y_train, epochs=355,verbose=0)
+    
+    def test_error():
+        loss, mape = self.model.evaluate(self.X_test,self.y_test)
+        y_pred = self.model.predict(self.X_test)
 
-        history = model.fit(X_train,y_train, epochs=355,verbose=0)
+        y_pred = np.asarray(y_pred)
+        y_test = np.asarray(y_test)
 
-        loss, mape = model.evaluate(X_test,y_test)
-        y_pred = model.predict(X_test)
-        y_pred = np.asarray(y_pred).reshape(480,1)
-        y_test = np.asarray(y_test).reshape(480,1)
         test_error = mape_calc(y_test,y_pred)
         return test_error
+    
+    def validation_error():
+        pass
 
