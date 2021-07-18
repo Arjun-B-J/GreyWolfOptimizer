@@ -14,7 +14,9 @@ class ANN:
         self.selected_features_index = selected_features_index
         self.data = data
     
-    def data_preprocessing(self,data,selected_features_index):
+    def data_preprocessing(self):
+        selected_features_index = self.selected_features_index
+        data = self.data
         X = data.drop("target", axis = 1)
         y = data["target"]
 
@@ -23,12 +25,12 @@ class ANN:
 
         for index in range(len(selected_features_index)):
             if selected_features_index[index] == 1:
-            selected_features.append(cols[index])  
+                selected_features.append(cols[index])  
 
         for i in range(len(cols)):
             k = cols[i]
             if k not in selected_features:
-            X = X.drop(columns = k)
+                X = X.drop(columns = k)
             
         scaler = StandardScaler()
         scaler.fit(X)
@@ -42,18 +44,18 @@ class ANN:
         self.X_test = X_rem
         self.y_test = y_rem
 
-    def mape_calc(actual, pred): 
+    def mape_calc(self, actual, pred): 
         actual, pred = np.array(actual), np.array(pred)
         return np.mean(np.abs((actual - pred) / actual)) * 100
 
-    def smape(a, f):
+    def smape(self, a, f):
         return 1/len(a) * np.sum(2 * np.abs(f-a) / (np.abs(a) + np.abs(f))*100)
 
-    def build_model():
+    def build_model(self):
         self.model = tf.keras.Sequential([
-                                    tf.keras.layers.Dense(100,activation='relu'),
-                                    tf.keras.layers.Dense(100,activation='relu'),
-                                    tf.keras.layers.Dense(100,activation='relu'),
+                                    tf.keras.layers.Dense(50,activation='relu'),
+                                    tf.keras.layers.Dense(30,activation='relu'),
+                                    tf.keras.layers.Dense(20,activation='relu'),
                                     tf.keras.layers.Dense(10),
                                     tf.keras.layers.Dense(1)
 
@@ -63,21 +65,21 @@ class ANN:
                         optimizer=tf.keras.optimizers.Adam(learning_rate=0.01),
                         metrics=['mape'])
     
-    def train():
+    def train(self):
         self.data_preprocessing()
         self.build_model()
-        self.history = self.model.fit(self.X_train,self.y_train, epochs=355,verbose=0)
+        self.history = self.model.fit(self.X_train,self.y_train, epochs=50,verbose=1)
     
-    def test_error():
+    def test_error(self):
         loss, mape = self.model.evaluate(self.X_test,self.y_test)
         y_pred = self.model.predict(self.X_test)
 
         y_pred = np.asarray(y_pred)
-        y_test = np.asarray(y_test)
+        y_test = np.asarray(self.y_test)
 
-        test_error = mape_calc(y_test,y_pred)
+        test_error = self.mape_calc(y_test,y_pred)
         return test_error
     
-    def validation_error():
+    def validation_error(self):
         pass
 
