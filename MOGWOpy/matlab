@@ -1,0 +1,325 @@
+clear all
+clc
+
+drawing_flag = 1;
+
+TestProblem='UF1';
+nVar=10;
+
+
+xrange = xboundary(TestProblem, nVar); %//nVar x 2 array [defines lb & ub for nVar dimensions]
+
+% Lower bound and upper bound
+lb=xrange(:,1)';
+ub=xrange(:,2)';
+
+VarSize=[1 nVar];
+
+GreyWolves_num=100;
+MaxIt=1000;  % Maximum Number of Iterations
+Archive_size=100;   % Repository Size
+
+alpha=0.1;  % Grid Inflation Parameter
+nGrid=10;   % Number of Grids per each Dimension
+beta=4; %=4;    % Leader Selection Pressure Parameter
+gamma=2;    % Extra (to be deleted) Repository Member Selection Pressure
+
+xrange;
+
+
+cost = fobj(unifrnd(-1,1))
+lb
+% Initialization
+
+GreyWolves=CreateEmptyParticle(GreyWolves_num);
+
+for i=1:GreyWolves_num
+    GreyWolves(i).Velocity=0;
+    GreyWolves(i).Position=zeros(1,nVar);
+    for j=1:nVar
+        GreyWolves(i).Position(1,j)=unifrnd(lb(j),ub(j),1);
+    end
+    GreyWolves(i).Cost=fobj(GreyWolves(i).Position')';
+    GreyWolves(i).Best.Position=GreyWolves(i).Position;
+    GreyWolves(i).Best.Cost=GreyWolves(i).Cost;
+end
+
+GreyWolves=DetermineDomination(GreyWolves);
+
+Archive=GetNonDominatedParticles(GreyWolves);
+
+Archive_costs=GetCosts(Archive)
+
+G=CreateHypercubes(Archive_costs,nGrid,alpha)
+for i=1:numel(Archive)
+    [Archive(i).GridIndex Archive(i).GridSubIndex]=GetGridIndex(Archive(i),G);
+end
+Archive
+[occ_cell_index occ_cell_member_count] = GetOccupiedCells(Archive);
+occ_cell_member_count
+occ_cell_index
+
+function y = fobj(x)
+    [dim, num]  = size(x);
+    tmp         = zeros(dim,num);
+    tmp(2:dim,:)= (x(2:dim,:) - sin(6.0*pi*repmat(x(1,:),[dim-1,1]) + pi/dim*repmat((2:dim)',[1,num]))).^2;
+    tmp1        = sum(tmp(3:2:dim,:));  % odd index
+    tmp2        = sum(tmp(2:2:dim,:));  % even index
+    y(1,:)      = x(1,:)             + 2.0*tmp1/size(3:2:dim,2);
+    y(2,:)      = 1.0 - sqrt(x(1,:)) + 2.0*tmp2/size(2:2:dim,2);
+    clear tmp;
+end
+
+
+function range = xboundary(name,dim)
+
+    range = ones(dim,2); %// dim x 2 array with all ones
+    
+    switch name
+        case {'UF1','UF2','UF5','UF6','UF7','CF2'}
+            range(1,1)      =  0;
+            range(2:dim,1)  = -1;
+        case 'UF3'
+            range(:,1)      =  0;  
+        case {'UF4','CF3','CF4','CF5','CF6','CF7'}
+            range(1,1)      =  0;
+            range(2:dim,1)  = -2;
+            range(2:dim,2)  =  2; 
+        case {'UF8','UF9','UF10','CF9','CF10'}
+            range(1:2,1)    =  0;
+            range(3:dim,1)  = -2;
+            range(3:dim,2)  =  2;   
+        case 'CF1'
+            range(:,1)      =  0; 
+        case {'CF8'}
+            range(1:2,1)    =  0;
+            range(3:dim,1)  = -4;
+            range(3:dim,2)  =  4;             
+    end
+end
+
+function rep_h=SelectLeader(rep,beta)
+    if nargin<2
+        beta=1;
+    end
+
+    [occ_cell_index occ_cell_member_count]=GetOccupiedCells(rep);
+
+    %// [1 3 5]
+    %// [1 1/9 1/25]
+    
+    p=occ_cell_member_count.^(-beta);
+    p=p/sum(p);
+    
+    selected_cell_index=occ_cell_index(RouletteWheelSelection(p));
+    
+    GridIndices=[rep.GridIndex];
+    
+    selected_cell_members=find(GridIndices==selected_cell_index);
+    
+    n=numel(selected_cell_members);
+    
+    selected_memebr_index=randi([1 n]);
+    
+    h=selected_cell_members(selected_memebr_index);
+    
+    rep_h=rep(h);
+end
+
+function i=RouletteWheelSelection(p)
+    %// [1 2 2 3]
+    %// [1 2 3]
+    %// [.25 .5 .25]
+    %// c =[.25 .75 1]
+
+    r=rand;
+    c=cumsum(p);
+    i=find(r<=c,1,'first');
+
+end
+
+function [occ_cell_index occ_cell_member_count]=GetOccupiedCells(pop)
+
+    GridIndices=[pop.GridIndex];
+    
+    occ_cell_index=unique(GridIndices);
+
+    [1 1 2 2 3 3 3 ]
+    [1 2 3]
+    [2 2 3]
+    
+    occ_cell_member_count=zeros(size(occ_cell_index));
+
+    m=numel(occ_cell_index);
+    for k=1:m
+        occ_cell_member_count(k)=sum(GridIndices==occ_cell_index(k));
+    end
+    
+end
+
+function nd_pop=GetNonDominatedParticles(pop)
+
+    ND=~[pop.Dominated];
+    
+    nd_pop=pop(ND);
+
+end
+
+function [Index SubIndex]=GetGridIndex(particle,G)
+
+    c=particle.Cost; %//[12 14]
+
+    nobj=numel(c);  %//2
+    ngrid=numel(G(1).Upper);    %//nGrid
+                                [1 1] * 7
+    str=['sub2ind(' mat2str(ones(1,nobj)*ngrid)];   %//sub2ind([7, 7]
+
+    SubIndex=zeros(1,nobj);     %//[0 0]
+    for j=1:nobj
+        
+        U=G(j).Upper;   %// [10 11 12 13 14 15 inf]
+        
+        i=find(c(j)<U,1,'first');   %// 4
+        
+        SubIndex(j)=i;
+        
+        str=[str ',' num2str(i)];
+    end
+    %//SubIndex = [4 6]
+    str=[str ');'];
+
+    %//sub2ind([7, 7], 4, 6)
+    
+    Index=eval(str);
+    
+end
+
+function costs=GetCosts(pop)
+
+    nobj=numel(pop(1).Cost);
+    costs=reshape([pop.Cost],nobj,[]);
+
+end
+
+function dom=Dominates(x,y)
+
+    if isstruct(x)
+        x=x.Cost;   %//[c1 c2]
+    end
+
+    if isstruct(y)
+        y=y.Cost;   %//[c3 c4]
+    end
+    
+    dom=all(x<=y) && any(x<y);
+
+end
+
+function pop=DetermineDomination(pop)
+
+    npop=numel(pop);
+    for i=1:npop
+        pop(i).Dominated=false;
+        for j=1:i-1
+            if ~pop(j).Dominated
+                if Dominates(pop(i),pop(j))
+                    pop(j).Dominated=true;
+                elseif Dominates(pop(j),pop(i))
+                    pop(i).Dominated=true;
+                    break;
+                end
+            end
+        end
+    end
+
+end
+
+function rep=DeleteFromRep(rep,EXTRA,gamma)
+
+    if nargin<3
+        gamma=1;
+    end
+
+    for k=1:EXTRA
+        [occ_cell_index occ_cell_member_count]=GetOccupiedCells(rep);
+
+        p=occ_cell_member_count.^gamma;
+        p=p/sum(p);
+
+        selected_cell_index=occ_cell_index(RouletteWheelSelection(p));
+
+        GridIndices=[rep.GridIndex];
+
+        selected_cell_members=find(GridIndices==selected_cell_index);
+
+        n=numel(selected_cell_members);
+
+        selected_memebr_index=randi([1 n]);
+
+        j=selected_cell_members(selected_memebr_index);
+        
+        rep=[rep(1:j-1); rep(j+1:end)];
+    end
+    
+end
+
+function G=CreateHypercubes(costs,ngrid,alpha)
+
+    nobj=size(costs,1); %// 2 x nObj 
+    
+    empty_grid.Lower=[];
+    empty_grid.Upper=[];
+    G=repmat(empty_grid,nobj,1);
+
+    %// G = [empty empty, .... empty] nObj x 1
+    %// costs = [[a b]
+    %//          [c d]
+    %//          [e f]
+    %//          [g h]]
+    %// costs = [[a c e g]
+    %//          [b d f g]]
+ 
+    for j=1:nobj
+        
+        min_cj=min(costs(j,:));
+        max_cj=max(costs(j,:));
+        
+        dcj=alpha*(max_cj-min_cj);
+        
+        min_cj=min_cj-dcj;
+        max_cj=max_cj+dcj;
+        
+        gx=linspace(min_cj,max_cj,ngrid-1);
+        
+        G(j).Lower=[-inf gx];
+        G(j).Upper=[gx inf];
+        
+    end
+    %                    nGrid = 7
+    %costs = [[10 15]  Lower = [-inf 10, 11, 12 13 14 15] Upper = [ 10, 11, 12 13 14 15 inf]
+    %         [ 5 45]
+    %         [ 8 28]
+
+    
+end
+
+function particle=CreateEmptyParticle(n)
+    
+    if nargin<1
+        n=1;
+    end
+
+    empty_particle.Position=[];
+    empty_particle.Velocity=[];
+    empty_particle.Cost=[];
+    empty_particle.Dominated=false;
+    empty_particle.Best.Position=[];
+    empty_particle.Best.Cost=[];
+    empty_particle.GridIndex=[];
+    empty_particle.GridSubIndex=[];
+    
+    particle=repmat(empty_particle,n,1);
+    
+end
+
+
