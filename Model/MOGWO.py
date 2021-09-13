@@ -3,25 +3,24 @@ import datetime
 import time
 from ANN_Classifier_v2 import *
 
-np.random.seed(42)
-
 # sigmoid fun
 def sigmoid(x):
-  return 1/(1 + np.exp( (-10) * (x - 0.5) ))
+    return 1/(1 + np.exp( (-10) * (x - 0.5) ))
 
 
 class Wolf:
 
-  def __init__(self, dim):
-    pos = sigmoid(np.random.rand(dim)) >= 0.5
+    def __init__(self, dim):
+        pos = sigmoid(np.random.rand(dim)) >= 0.5
 
-    # To avoid all zero condition
-    while(np.count_nonzero(pos)==0):
-      pos = sigmoid(np.random.rand(dim)) >= 0.5
+        # To avoid all zero condition
+        while(np.count_nonzero(pos)==0):
+            pos = sigmoid(np.random.rand(dim)) >= 0.5
 
-    self.position = pos
-    self.obj_score = float('inf')
-    self.obj_fun_time = None
+        self.position = pos
+        self.obj_score = []
+        self.dominated = False
+        self.obj_fun_time = None
 
 class BinaryGWO:
   
@@ -31,7 +30,7 @@ class BinaryGWO:
     self.wolves_n = wolves_n
     self.iter_n = iter_n
 
-    self.history = {
+    self.score_history = {
         'alpha' : [],
         'beta' : [],
         'delta' : []
@@ -82,11 +81,10 @@ class BinaryGWO:
             
       elif w.obj_score <= self.delta.obj_score:
           self.delta = w
-          
-          
-    self.history['alpha'].append({ 'score': self.alpha.obj_score, 'pos': self.alpha.position})
-    self.history['beta'].append({ 'score': self.beta.obj_score, 'pos': self.beta.position})
-    self.history['delta'].append({ 'score': self.delta.obj_score, 'pos': self.delta.position})
+            
+    self.score_history['alpha'].append(self.alpha.obj_score)
+    self.score_history['beta'].append(self.beta.obj_score)
+    self.score_history['delta'].append(self.delta.obj_score)
 
     print(f'alpha pos: {self.alpha.position}\tscore : {self.alpha.obj_score}')
     print(f'beta pos: {self.beta.position}\tscore : {self.beta.obj_score}')
@@ -118,7 +116,7 @@ class BinaryGWO:
       c_step_alpha = sigmoid(A1 * D_alpha)
       b_step_alpha = c_step_alpha >= np.random.rand(self.dim)
       X1 = ((self.alpha.position + b_step_alpha) >= 1)
-      #X1 = self.alpha.position - (A1 * D_alpha)
+      #X1 = alpha.position - (A1 * D_alpha)
             
             
       r1 = np.random.rand(self.dim)
@@ -132,7 +130,7 @@ class BinaryGWO:
       c_step_beta = sigmoid(A2 * D_beta)
       b_step_beta = c_step_beta >= np.random.rand(self.dim)
       X2 = ((self.beta.position + b_step_beta) >= 1)
-      #X2 = self.beta.position - (A2 * D_beta)
+      #X2 = beta.position - (A2 * D_beta)
             
             
       r1 = np.random.rand(self.dim)
@@ -146,7 +144,7 @@ class BinaryGWO:
       c_step_delta = sigmoid(A3 * D_delta)
       b_step_delta = c_step_delta >= np.random.rand(self.dim)
       X3 = ((self.delta.position + b_step_delta) >= 1)
-      #X3 = self.delta.position - (A3 * D_delta)
+      #X3 = delta.position - (A3 * D_delta)
       
       updated_position = (sigmoid( (X1 + X2 + X3)/3 ) >= np.random.rand(self.dim))
 

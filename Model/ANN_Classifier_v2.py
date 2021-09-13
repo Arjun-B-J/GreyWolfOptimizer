@@ -55,8 +55,13 @@ class ANN:
         self.model = tf.keras.Sequential([
                                     tf.keras.layers.Dense(50,activation='relu'),
                                     tf.keras.layers.Dense(30,activation='relu'),
+                                    tf.keras.layers.Dense(30,activation='relu'),
+                                    tf.keras.layers.Dense(30,activation='relu'),
                                     tf.keras.layers.Dense(20,activation='relu'),
-                                    tf.keras.layers.Dense(10),
+                                    tf.keras.layers.Dense(20,activation='relu'),
+                                    tf.keras.layers.Dense(10,activation='relu'),
+                                    tf.keras.layers.Dense(10,activation='relu'),
+                                    tf.keras.layers.Dense(5),
                                     tf.keras.layers.Dense(1)
 
         ])
@@ -68,7 +73,7 @@ class ANN:
     def train(self):
         self.data_preprocessing()
         self.build_model()
-        self.history = self.model.fit(self.X_train,self.y_train, epochs=50,verbose=1)
+        self.history = self.model.fit(self.X_train,self.y_train, epochs=30,verbose=0)
     
     def test_error(self):
         loss, mape = self.model.evaluate(self.X_test,self.y_test)
