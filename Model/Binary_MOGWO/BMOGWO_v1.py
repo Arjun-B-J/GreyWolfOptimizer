@@ -1,15 +1,16 @@
 from GreyWolf import *
 from Grid import *
+from ANN_Classifier_v2 import *
 import numpy as np
 from copy import deepcopy
 
 class BMOGWO:
 
-    def __init__(self, dim, fobj, greyWolvesNum=30, maxIt=100, archiveSize=10,
+    def __init__(self, dataset, greyWolvesNum=8, maxIt=100, archiveSize=10,
         nGrid=10, alpha=0.1, beta=4, gamma=2):
         
-        self.dim = dim
-        self.fobj = fobj
+        self.dim = dataset.shape[1] - 1
+        self.dataset = dataset
         self.greyWolvesNum = greyWolvesNum
         self.maxIt = maxIt
         self.archiveSize = archiveSize
@@ -23,7 +24,14 @@ class BMOGWO:
         self.archive = []
 
         self.explored = {}  # Keeps track of explored position in each iteration
-
+    
+    def fobj(self, selected_features):
+        ann = ANN(selected_features, self.dataset)
+        ann.train()
+        err = ann.test_error()
+        no_of_features = np.count_nonzero(selected_features)
+        return np.array([no_of_features, err])
+    
     def optimize(self):
         maxIt = self.maxIt
         greyWolvesNum = self.greyWolvesNum
@@ -55,7 +63,7 @@ class BMOGWO:
         # MOGWO main loop
         for it in range(maxIt):
 
-            self.explored[it] = deepcopy(self.greyWolves)
+            self.explored[it] = [ obj.position for obj in self.greyWolves ]
             
             a = 2 - it*((2)/maxIt)
 
