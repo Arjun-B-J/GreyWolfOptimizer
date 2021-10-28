@@ -173,7 +173,7 @@ class BMOGWO:
                 
                 elif case3:
                     if(len(self.archive) < self.archiveSize):
-                        self.archive = np.append(self.archive, sol)
+                        self.archive = np.append(self.archive, deepcopy(sol))
                     else:
                         self.deleteFromRepo(1,gamma)
                         sol.gridIndex, sol.gridSubIndex = getGridIndex(sol,grid)

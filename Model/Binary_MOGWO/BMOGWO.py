@@ -74,7 +74,7 @@ class BMOGWO:
                 Beta = self.selectLeader(beta)
                 addBack += 1
 
-            if(len(self.archive)>2):
+            if(len(self.archive)>1):
                 self.archive = np.delete(self.archive, np.where(self.archive==Beta))
                 Delta = self.selectLeader(beta)
                 addBack += 1
@@ -164,7 +164,7 @@ class BMOGWO:
                 
                 if case3:
                     if(len(self.archive) < self.archiveSize):
-                        self.archive = np.append(self.archive, sol)
+                        self.archive = np.append(self.archive, deepcopy(sol))
                     else:
                         self.deleteFromRepo(1,gamma)
                         sol.gridIndex, sol.gridSubIndex = getGridIndex(sol,grid)
