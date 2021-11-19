@@ -11,6 +11,7 @@ class GreyWolf:
         self.best['Cost']=[]
         self.gridIndex=[]
         self.gridSubIndex=[]
+        self.updated = False
 
 
     def dominates(self,y):      # returns True if self dominates y
