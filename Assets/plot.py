@@ -88,3 +88,26 @@ def plot_archivecost(it,datasets,res_loc):
     plt.xlabel('Archive Cost')
     plt.title(f'{datasets[n-1]} - [No of Features: {no_of_features}]')
     n+=1
+    
+def plot_archivecost(it,datasets,res_loc, scatter=False):
+  results = load_results(it,datasets,res_loc)
+  len_results = len(results)
+  fig = plt.figure(figsize=(30,45))
+  x = 3
+  y = len_results/x
+  n=1
+  for res in results:
+    archiveCost = res['archiveCosts']
+    no_of_features = len(res['explored'][0][0])
+    fig.add_subplot(y+1,x,n)
+    if scatter:
+      cost = np.array(archiveCost)
+      plt.plot(cost[:,0], cost[:,1], '*')
+      plt.ylabel('Archive Cost')
+      plt.xlabel('Number of Features')
+    else:
+      plt.plot(archiveCost)
+      plt.ylabel('Number of Features')
+      plt.xlabel('Archive Cost')
+    plt.title(f'{datasets[n-1]} - [No of Features: {no_of_features}]')
+    n+=1
