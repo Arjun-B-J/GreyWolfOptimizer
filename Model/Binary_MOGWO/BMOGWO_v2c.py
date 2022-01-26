@@ -6,6 +6,7 @@ from copy import deepcopy
 
 # Fixing archive addition
 # Adding unique solution set
+# Initializing one search agent with all features
 
 class BMOGWO:
 
@@ -240,7 +241,7 @@ class BMOGWO:
 
         greyWolves = self.greyWolves
 
-        for i in range(self.greyWolvesNum):
+        for i in range(1,self.greyWolvesNum):
             #greyWolves[i].velocity = 0
             greyWolves[i].position = (np.random.uniform(size = self.dim) >= 0.5) * 1
             while(np.count_nonzero(greyWolves[i].position)==0):
@@ -248,6 +249,9 @@ class BMOGWO:
             greyWolves[i].cost = np.asarray(self.fobj(greyWolves[i].position))
             greyWolves[i].best['Position'] = np.copy(greyWolves[i].position)
             greyWolves[i].best['Cost'] = np.copy(greyWolves[i].cost)
+        
+        greyWolves[0].position = np.ones(self.dim, dtype=int)   # Selecting all features for initial agent
+        greyWolves[0].cost = np.asarray(self.fobj(greyWolves[0].position))
 
     def determineDomination(self):
         #Note here we are taking particles as 1D-array

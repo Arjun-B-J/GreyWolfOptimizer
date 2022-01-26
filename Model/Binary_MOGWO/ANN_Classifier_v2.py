@@ -6,11 +6,11 @@ import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 
-tf.random.set_seed(42) #random seed
 
 class ANN:
     
     def __init__(self,selected_features_index,data):
+        tf.random.set_seed(42) #random seed
         self.selected_features_index = selected_features_index
         self.data = data
     

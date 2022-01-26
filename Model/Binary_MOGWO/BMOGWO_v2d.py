@@ -6,6 +6,7 @@ from copy import deepcopy
 
 # Fixing archive addition
 # Adding unique solution set
+# Modifying exploration parameter circular manner
 
 class BMOGWO:
 
@@ -74,7 +75,8 @@ class BMOGWO:
 
             self.explored[it] = [ obj.position for obj in self.greyWolves ]
             
-            a = 2 - it*((2)/maxIt)
+            # a = 2 - it*((2)/maxIt)
+            a = 2 * np.sqrt(1 - ((it/maxIt)**2) )
 
             Alpha = self.selectLeader(beta)
             Beta = self.selectLeader(beta)
