@@ -24,6 +24,7 @@
 #res_loc = '/content/gdrive/My Drive/GWO/Results_ArchiveMod/'
 #"""other assumptions are key value of dictionary would be 'explored','archiveCosts' """
 
+from cProfile import label
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt
@@ -72,22 +73,6 @@ def plot_explored(it,datasets,res_loc):
     plt.ylabel('unique solutions explored')
     plt.title(f'{datasets[n-1]} - [No of Features: {no_of_features}]')
     n+=1
-def plot_archivecost(it,datasets,res_loc):
-  results = load_results(it,datasets,res_loc)
-  len_results = len(results)
-  fig = plt.figure(figsize=(30,45))
-  x = 3
-  y = len_results/x
-  n=1
-  for res in results:
-    archiveCost = res['archiveCosts']
-    no_of_features = len(res['explored'][0][0])
-    fig.add_subplot(y+1,x,n)
-    plt.plot(archiveCost)
-    plt.ylabel('Number of Features')
-    plt.xlabel('Archive Cost')
-    plt.title(f'{datasets[n-1]} - [No of Features: {no_of_features}]')
-    n+=1
     
 def plot_archivecost(it,datasets,res_loc, scatter=False):
   results = load_results(it,datasets,res_loc)
@@ -103,11 +88,47 @@ def plot_archivecost(it,datasets,res_loc, scatter=False):
     if scatter:
       cost = np.array(archiveCost)
       plt.plot(cost[:,0], cost[:,1], '*')
-      plt.ylabel('Archive Cost')
+      plt.ylabel('Classification Error')
       plt.xlabel('Number of Features')
     else:
       plt.plot(archiveCost)
       plt.ylabel('Number of Features')
-      plt.xlabel('Archive Cost')
+      plt.xlabel('Classification Error')
+    plt.title(f'{datasets[n-1]} - [No of Features: {no_of_features}]')
+    n+=1
+
+def compare_archive(it, datasets, res_loc_list, labels):
+  results_1 = load_results(it,datasets,res_loc_list[0])
+  results_2 = load_results(it,datasets,res_loc_list[1])
+  len_results = len(results_1)
+
+  fig = plt.figure(figsize=(30,45))
+
+  x = 3
+  y = len_results/x
+  n=1
+
+  for i in range(len_results):
+    res1 = results_1[i]
+    res2 = results_2[i]
+
+    archiveCost1 = res1['archiveCosts']
+    archiveCost2 = res2['archiveCosts']
+
+    archiveCost1.sort( key = lambda x: x[0] )
+    archiveCost2.sort( key = lambda x: x[0] )
+
+    no_of_features = res1['dim']
+    fig.add_subplot(y+1,x,n)
+    
+    cost1 = np.array(archiveCost1)
+    cost2 = np.array(archiveCost2)
+
+    plt.plot(cost1[:,0], cost1[:,1], '*-', label=labels[0])
+    plt.plot(cost2[:,0], cost2[:,1], '*-', label=labels[1])
+    plt.ylabel('Classification Error')
+    plt.xlabel('Number of Features')
+    
+    plt.legend()
     plt.title(f'{datasets[n-1]} - [No of Features: {no_of_features}]')
     n+=1
