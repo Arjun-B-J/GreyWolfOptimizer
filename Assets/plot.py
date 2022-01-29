@@ -98,8 +98,13 @@ def plot_archivecost(it,datasets,res_loc, scatter=False):
     n+=1
 
 def compare_archive(it, datasets, res_loc_list, labels):
-  results_1 = load_results(it,datasets,res_loc_list[0])
-  results_2 = load_results(it,datasets,res_loc_list[1])
+  if type(it)==list:
+    it1 = it[0]
+    it2 = it[1]
+  else:
+    it1 = it2 = it
+  results_1 = load_results(it1,datasets,res_loc_list[0])
+  results_2 = load_results(it2,datasets,res_loc_list[1])
   len_results = len(results_1)
 
   fig = plt.figure(figsize=(30,45))
