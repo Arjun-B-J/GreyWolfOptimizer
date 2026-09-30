@@ -1,5 +1,10 @@
 # GreyWolfOptimizer
 
+> **Publication** — experiments from our NIT Calicut B.Tech project that grew into
+> *Statistically aided Binary Multi-Objective Grey Wolf Optimizer: a new feature selection approach for classification* (SaBMOGWO-S).
+> The Journal of Supercomputing (Springer), vol. 79, pp. 12869–12901, 2023 · DOI [10.1007/s11227-023-05145-y](https://doi.org/10.1007/s11227-023-05145-y)
+> Co-authored with Amal Francis V Ukken, Jaideep Kumar P M and Pranesh Das; commits here include @Jaideep1099 and @amalfrancisu.
+
 Implementations of the Grey Wolf Optimizer (GWO) and several variants in Python, applied primarily to **feature selection** on standard UCI machine learning datasets.
 
 ## About Grey Wolf Optimizer
